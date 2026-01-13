@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 
@@ -14,17 +15,22 @@ func main() {
 	fmt.Println("Starting Peril server...")
 	ConnString := "amqp://guest:guest@localhost:5672/"
 	cxn, err := amqp.Dial(ConnString)
-	defer cxn.Close()
-	if err == nil {
-		fmt.Println("Connection to server successful!")
+	if err != nil {
+		log.Fatalf("could not open connection: %s", err.Error())
 	}
+	fmt.Println("Server start successful!")
+	defer cxn.Close()
+
 	pauseChannel, err := cxn.Channel()
 	if err != nil {
 		panic(err)
 	}
-	pubsub.PublishJSON(pauseChannel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{
+	err = pubsub.PublishJSON(pauseChannel, routing.ExchangePerilDirect, routing.PauseKey, routing.PlayingState{
 		IsPaused: true,
 	})
+	if err != nil {
+		panic(err)
+	}
 
 	// server shutdown
 	signalChan := make(chan os.Signal, 1)
