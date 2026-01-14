@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/bntrtm/learn-pub-sub-starter/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -23,4 +24,15 @@ func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error {
 		return err
 	}
 	return nil
+}
+
+type Publisher struct{}
+
+func (p *Publisher) SendPauseMessage(channel *amqp.Channel, isPaused bool) error {
+	return PublishJSON(
+		channel,
+		routing.ExchangePerilDirect,
+		routing.PauseKey,
+		routing.PlayingState{IsPaused: isPaused},
+	)
 }
