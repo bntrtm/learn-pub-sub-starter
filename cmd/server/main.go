@@ -31,7 +31,7 @@ func main() {
 		cxn,
 		routing.ExchangePerilTopic,
 		routing.GameLogSlug,
-		ps.BuildQueueString(routing.GameLogSlug, "*"),
+		ps.RKey(routing.GameLogSlug, "*"),
 		ps.Durable)
 	if err != nil {
 		log.Fatalf("queue error: %v", err)

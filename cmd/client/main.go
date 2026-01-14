@@ -28,7 +28,7 @@ func main() {
 
 	err = ps.SubscribeJSON(cxn,
 		routing.ExchangePerilDirect,
-		ps.BuildQueueString(routing.PauseKey, username),
+		ps.RPattern(routing.PauseKey, username),
 		routing.PauseKey,
 		ps.Transient,
 		handlerPause(gameState),
