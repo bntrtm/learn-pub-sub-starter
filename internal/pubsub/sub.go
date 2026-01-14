@@ -92,9 +92,3 @@ func DeclareAndBind(
 
 	return channel, queue, nil
 }
-
-// BuildQueueString concatenates two strings with an "."
-// to produce an AMQP queue string.
-func BuildQueueString(routingKey, name string) string {
-	return routingKey + "." + name
-}

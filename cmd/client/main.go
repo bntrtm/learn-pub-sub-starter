@@ -37,20 +37,33 @@ func main() {
 		log.Fatalf("queue error: %v", err)
 	}
 
+	err = ps.SubscribeJSON(cxn,
+		routing.ExchangePerilTopic,
+		ps.RPattern(routing.ArmyMovesPrefix, username),
+		ps.RPattern(routing.ArmyMovesPrefix, "*"),
+		ps.Transient,
+		handlerMove(gameState),
+	)
+	if err != nil {
+		log.Fatalf("queue error: %v", err)
+	}
+
+	moveChannel, err := cxn.Channel()
+	if err != nil {
+		log.Fatalf("could not create channel: %v", err)
+	}
+
 REPL:
 	for {
-		prompt := ""
-		if gameState.Paused {
-			prompt = "|| "
-		}
-
-		words := gamelogic.GetInput(prompt)
+		words := gamelogic.GetInput("")
 		if len(words) == 0 {
 			continue
 		}
 		if gameState.Paused && words[0] != "quit" {
 			words[0] = "GAME_PAUSED"
 		}
+
+		pub := ps.Publisher{}
 
 		switch words[0] {
 		case "spawn":
@@ -63,7 +76,14 @@ REPL:
 			if err != nil {
 				log.Println(err)
 			}
-			log.Printf("moved unit %d to %s", move.Units[0].ID, move.ToLocation)
+			err = pub.SendMoveMessage(
+				moveChannel,
+				username,
+				move)
+			if err != nil {
+				log.Println(err)
+			}
+			log.Printf("moved %d units to %s", len(move.Units), move.ToLocation)
 		case "status":
 			gameState.CommandStatus()
 		case "spam":
@@ -74,8 +94,8 @@ REPL:
 			gamelogic.PrintQuit()
 			break REPL
 		case "GAME_PAUSED":
-			fmt.Println("The game is paused.")
-			fmt.Println("Use 'quit' or wait for play to resume.")
+			fmt.Println("|| The game is paused.")
+			fmt.Println("|| Use 'quit' or wait for play to resume.")
 			continue
 		default:
 			fmt.Printf("Command '%s' not recognized\n", words[0])

@@ -7,11 +7,12 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/bntrtm/learn-pub-sub-starter/internal/gamelogic"
 	"github.com/bntrtm/learn-pub-sub-starter/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// PublishJSON publishes a JSON message to an AMQP exchange.z
+// PublishJSON publishes a JSON message to an AMQP exchange.
 func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error {
 	jsonBytes, err := json.Marshal(val)
 	if err != nil {
@@ -35,5 +36,14 @@ func (p *Publisher) SendPauseMessage(channel *amqp.Channel, isPaused bool) error
 		routing.ExchangePerilDirect,
 		routing.PauseKey,
 		routing.PlayingState{IsPaused: isPaused},
+	)
+}
+
+func (p *Publisher) SendMoveMessage(channel *amqp.Channel, username string, move gamelogic.ArmyMove) error {
+	return PublishJSON(
+		channel,
+		routing.ExchangePerilTopic,
+		RPattern(routing.ArmyMovesPrefix, "username"),
+		move,
 	)
 }
