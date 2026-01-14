@@ -28,8 +28,6 @@ func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error {
 	return nil
 }
 
-type Publisher struct{}
-
 func SendPauseMessage(channel *amqp.Channel, isPaused bool) error {
 	return PublishJSON(
 		channel,
