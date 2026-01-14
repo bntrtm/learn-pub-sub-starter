@@ -4,7 +4,9 @@
 package pubsub
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"encoding/json"
 
 	"github.com/bntrtm/learn-pub-sub-starter/internal/gamelogic"
@@ -26,6 +28,34 @@ func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error {
 		return err
 	}
 	return nil
+}
+
+// PublishGob publishes a gob message to an AMQP exchange.
+func PublishGob[T any](ch *amqp.Channel, exchange, key string, val T) error {
+	var buf bytes.Buffer
+	encoder := gob.NewEncoder(&buf)
+	err := encoder.Encode(val)
+	if err != nil {
+		return err
+	}
+	err = ch.PublishWithContext(context.Background(), exchange, key, false, false, amqp.Publishing{
+		ContentType: "application/gob",
+		Body:        buf.Bytes(),
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SendGameLog publishes a game log in gob format through the given channel
+func SendGameLog(channel *amqp.Channel, attackerUsername, gameLog string) error {
+	return PublishGob(
+		channel,
+		routing.ExchangePerilTopic,
+		RPattern(routing.GameLogSlug, attackerUsername),
+		routing.GameLog{Message: gameLog},
+	)
 }
 
 func SendPauseMessage(channel *amqp.Channel, isPaused bool) error {
