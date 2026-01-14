@@ -37,20 +37,31 @@ func main() {
 		log.Fatalf("queue error: %v", err)
 	}
 
+	moveChannel, err := cxn.Channel()
+	if err != nil {
+		log.Fatalf("could not create channel: %v", err)
+	}
+
 	err = ps.SubscribeJSON(cxn,
 		routing.ExchangePerilTopic,
 		ps.RPattern(routing.ArmyMovesPrefix, username),
 		ps.RPattern(routing.ArmyMovesPrefix, "*"),
 		ps.Transient,
-		handlerMove(gameState),
+		handlerMove(gameState, moveChannel),
 	)
 	if err != nil {
 		log.Fatalf("queue error: %v", err)
 	}
 
-	moveChannel, err := cxn.Channel()
+	err = ps.SubscribeJSON(cxn,
+		routing.ExchangePerilTopic,
+		routing.WarRecognitionsPrefix,
+		ps.RPattern(routing.WarRecognitionsPrefix, "*"),
+		ps.Durable,
+		handlerRecognizeWar(gameState),
+	)
 	if err != nil {
-		log.Fatalf("could not create channel: %v", err)
+		log.Fatalf("queue error: %v", err)
 	}
 
 REPL:

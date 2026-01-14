@@ -47,3 +47,12 @@ func SendMoveMessage(channel *amqp.Channel, username string, move gamelogic.Army
 		move,
 	)
 }
+
+func SendWarMessage(channel *amqp.Channel, username string, warRec gamelogic.RecognitionOfWar) error {
+	return PublishJSON(
+		channel,
+		routing.ExchangePerilTopic,
+		RPattern(routing.WarRecognitionsPrefix, username),
+		warRec,
+	)
+}
