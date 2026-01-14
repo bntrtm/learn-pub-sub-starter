@@ -1,5 +1,6 @@
 // Package pubsub offers helpful functions for defining queues
-// and sending JSON-based messages
+// for sending messaages via publishers, and consuming them
+// via subscribers.
 package pubsub
 
 import (

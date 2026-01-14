@@ -24,24 +24,34 @@ func main() {
 		log.Fatalf("could not log in: %v", err)
 	}
 
-	_, _, err = ps.DeclareAndBind(
-		cxn,
+	gameState := gamelogic.NewGameState(username)
+
+	err = ps.SubscribeJSON(cxn,
 		routing.ExchangePerilDirect,
-		ps.BuildQueueName(routing.PauseKey, username),
+		ps.BuildQueueString(routing.PauseKey, username),
 		routing.PauseKey,
-		ps.Transient)
+		ps.Transient,
+		handlerPause(gameState),
+	)
 	if err != nil {
 		log.Fatalf("queue error: %v", err)
 	}
 
-	gameState := gamelogic.NewGameState(username)
-
 REPL:
 	for {
-		words := gamelogic.GetInput()
+		prompt := ""
+		if gameState.Paused {
+			prompt = "|| "
+		}
+
+		words := gamelogic.GetInput(prompt)
 		if len(words) == 0 {
 			continue
 		}
+		if gameState.Paused && words[0] != "quit" {
+			words[0] = "GAME_PAUSED"
+		}
+
 		switch words[0] {
 		case "spawn":
 			err := gameState.CommandSpawn(words)
@@ -63,6 +73,10 @@ REPL:
 		case "quit":
 			gamelogic.PrintQuit()
 			break REPL
+		case "GAME_PAUSED":
+			fmt.Println("The game is paused.")
+			fmt.Println("Use 'quit' or wait for play to resume.")
+			continue
 		default:
 			fmt.Printf("Command '%s' not recognized\n", words[0])
 		}

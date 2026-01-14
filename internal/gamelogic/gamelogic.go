@@ -28,7 +28,7 @@ func PrintClientHelp() {
 func ClientWelcome() (string, error) {
 	fmt.Println("Welcome to the Peril client!")
 	fmt.Println("Please enter your username:")
-	words := GetInput()
+	words := GetInput("")
 	if len(words) == 0 {
 		return "", errors.New("you must enter a username. goodbye")
 	}
@@ -46,8 +46,16 @@ func PrintServerHelp() {
 	fmt.Println("* help")
 }
 
-func GetInput() []string {
-	fmt.Print("> ")
+// GetInput uses a scanner to get user input, and returns a slice
+// of the words entered.
+//
+// When left empty, the prompt is a default ”.
+func GetInput(prompt string) []string {
+	if len(prompt) == 0 {
+		fmt.Print("> ")
+	} else {
+		fmt.Print(prompt)
+	}
 	scanner := bufio.NewScanner(os.Stdin)
 	scanned := scanner.Scan()
 	if !scanned {

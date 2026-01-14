@@ -5,7 +5,8 @@ import (
 	"log"
 
 	"github.com/bntrtm/learn-pub-sub-starter/internal/gamelogic"
-	"github.com/bntrtm/learn-pub-sub-starter/internal/pubsub"
+	ps "github.com/bntrtm/learn-pub-sub-starter/internal/pubsub"
+	"github.com/bntrtm/learn-pub-sub-starter/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -20,15 +21,25 @@ func main() {
 	defer cxn.Close()
 	fmt.Println("Peril game server connected to RabbitMQ!")
 
-	pub := pubsub.Publisher{}
+	pub := ps.Publisher{}
 	pauseChannel, err := cxn.Channel()
 	if err != nil {
 		log.Fatalf("could not create channel: %v", err)
 	}
 
+	_, _, err = ps.DeclareAndBind(
+		cxn,
+		routing.ExchangePerilTopic,
+		routing.GameLogSlug,
+		ps.BuildQueueString(routing.GameLogSlug, "*"),
+		ps.Durable)
+	if err != nil {
+		log.Fatalf("queue error: %v", err)
+	}
+
 GameLoop:
 	for {
-		words := gamelogic.GetInput()
+		words := gamelogic.GetInput("")
 		if len(words) == 0 {
 			continue
 		}
