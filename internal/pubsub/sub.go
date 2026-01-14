@@ -34,6 +34,18 @@ func DeclareAndBind(
 	if err != nil {
 		return nil, amqp.Queue{}, err
 	}
+
+	err = channel.QueueBind(
+		queue.Name,
+		key,
+		exchange,
+		false,
+		nil,
+	)
+	if err != nil {
+		return nil, amqp.Queue{}, err
+	}
+
 	return channel, queue, nil
 }
 
