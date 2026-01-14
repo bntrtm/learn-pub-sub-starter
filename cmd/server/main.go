@@ -21,17 +21,17 @@ func main() {
 	defer cxn.Close()
 	fmt.Println("Peril game server connected to RabbitMQ!")
 
-	pauseChannel, err := cxn.Channel()
+	pubChannel, err := cxn.Channel()
 	if err != nil {
 		log.Fatalf("could not create channel: %v", err)
 	}
 
-	_, _, err = ps.DeclareAndBind(
-		cxn,
+	err = ps.SubscribeGob(cxn,
 		routing.ExchangePerilTopic,
 		routing.GameLogSlug,
 		ps.RPattern(routing.GameLogSlug, "*"),
-		ps.Durable)
+		ps.Durable,
+		handlerLogs())
 	if err != nil {
 		log.Fatalf("queue error: %v", err)
 	}
@@ -45,13 +45,13 @@ GameLoop:
 		switch words[0] {
 		case "pause":
 			fmt.Println("Sending pause message...")
-			err := ps.SendPauseMessage(pauseChannel, true)
+			err := ps.SendPauseMessage(pubChannel, true)
 			if err != nil {
 				log.Println("Message send error: ", err)
 			}
 		case "resume":
 			fmt.Println("Sending resume message...")
-			err := ps.SendPauseMessage(pauseChannel, false)
+			err := ps.SendPauseMessage(pubChannel, false)
 			if err != nil {
 				log.Println("Message send error: ", err)
 			}

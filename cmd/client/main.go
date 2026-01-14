@@ -37,7 +37,7 @@ func main() {
 		log.Fatalf("queue error: %v", err)
 	}
 
-	moveChannel, err := cxn.Channel()
+	pubChannel, err := cxn.Channel()
 	if err != nil {
 		log.Fatalf("could not create channel: %v", err)
 	}
@@ -47,7 +47,7 @@ func main() {
 		ps.RPattern(routing.ArmyMovesPrefix, username),
 		ps.RPattern(routing.ArmyMovesPrefix, "*"),
 		ps.Transient,
-		handlerMove(gameState, moveChannel),
+		handlerMove(gameState, pubChannel),
 	)
 	if err != nil {
 		log.Fatalf("queue error: %v", err)
@@ -58,7 +58,7 @@ func main() {
 		routing.WarRecognitionsPrefix,
 		ps.RPattern(routing.WarRecognitionsPrefix, "*"),
 		ps.Durable,
-		handlerRecognizeWar(gameState),
+		handlerRecognizeWar(gameState, pubChannel),
 	)
 	if err != nil {
 		log.Fatalf("queue error: %v", err)
@@ -86,7 +86,7 @@ REPL:
 				log.Println(err)
 			}
 			err = ps.SendMoveMessage(
-				moveChannel,
+				pubChannel,
 				username,
 				move)
 			if err != nil {

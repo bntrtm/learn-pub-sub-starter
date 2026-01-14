@@ -41,20 +41,38 @@ func handlerMove(gs *gamelogic.GameState, publishCh *amqp.Channel) func(gamelogi
 	}
 }
 
-func handlerRecognizeWar(gs *gamelogic.GameState) func(gamelogic.RecognitionOfWar) ps.Acktype {
+func handlerRecognizeWar(gs *gamelogic.GameState, publishCh *amqp.Channel) func(gamelogic.RecognitionOfWar) ps.Acktype {
 	return func(warRec gamelogic.RecognitionOfWar) ps.Acktype {
 		defer fmt.Print("> ")
-		outcome, _, _ := gs.HandleWar(warRec)
+		outcome, winner, loser := gs.HandleWar(warRec)
 		switch outcome {
 		case gamelogic.WarOutcomeNotInvolved:
 			return ps.NackRequeue
 		case gamelogic.WarOutcomeNoUnits:
 			return ps.NackDiscard
 		case gamelogic.WarOutcomeOpponentWon:
+			err := ps.SendGameLog(publishCh,
+				warRec.Attacker.Username,
+				fmt.Sprintf("%s won a war against %s", winner, loser))
+			if err != nil {
+				return ps.NackRequeue
+			}
 			return ps.Ack
 		case gamelogic.WarOutcomeYouWon:
+			err := ps.SendGameLog(publishCh,
+				warRec.Attacker.Username,
+				fmt.Sprintf("%s won a war against %s", winner, loser))
+			if err != nil {
+				return ps.NackRequeue
+			}
 			return ps.Ack
 		case gamelogic.WarOutcomeDraw:
+			err := ps.SendGameLog(publishCh,
+				warRec.Attacker.Username,
+				fmt.Sprintf("A war between %s and %s resulted in a draw", winner, loser))
+			if err != nil {
+				return ps.NackRequeue
+			}
 			return ps.Ack
 		default:
 			fmt.Println("error: unrecognized war outcome")
