@@ -14,13 +14,21 @@ const (
 	Transient
 )
 
+type Acktype int
+
+const (
+	Ack Acktype = iota
+	NackDiscard
+	NackRequeue
+)
+
 func SubscribeJSON[T any](
 	conn *amqp.Connection,
 	exchange,
 	queueName,
 	key string,
 	queueType SimpleQueueType, // an enum to represent "durable" or "transient"
-	handler func(T),
+	handler func(T) Acktype,
 ) error {
 	channel, queue, err := DeclareAndBind(
 		conn,
@@ -44,8 +52,18 @@ func SubscribeJSON[T any](
 				log.Println(err)
 				continue
 			}
-			handler(data)
-			err = msg.Ack(false)
+			acktype := handler(data)
+			switch acktype {
+			case Ack:
+				err = msg.Ack(false)
+			case NackRequeue:
+				err = msg.Nack(false, true)
+			case NackDiscard:
+				err = msg.Nack(false, false)
+			default:
+				log.Println("invalid acktype")
+				continue
+			}
 			if err != nil {
 				log.Println(err)
 			}
