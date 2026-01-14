@@ -30,7 +30,7 @@ func PublishJSON[T any](ch *amqp.Channel, exchange, key string, val T) error {
 
 type Publisher struct{}
 
-func (p *Publisher) SendPauseMessage(channel *amqp.Channel, isPaused bool) error {
+func SendPauseMessage(channel *amqp.Channel, isPaused bool) error {
 	return PublishJSON(
 		channel,
 		routing.ExchangePerilDirect,
@@ -39,7 +39,7 @@ func (p *Publisher) SendPauseMessage(channel *amqp.Channel, isPaused bool) error
 	)
 }
 
-func (p *Publisher) SendMoveMessage(channel *amqp.Channel, username string, move gamelogic.ArmyMove) error {
+func SendMoveMessage(channel *amqp.Channel, username string, move gamelogic.ArmyMove) error {
 	return PublishJSON(
 		channel,
 		routing.ExchangePerilTopic,

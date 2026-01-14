@@ -63,8 +63,6 @@ REPL:
 			words[0] = "GAME_PAUSED"
 		}
 
-		pub := ps.Publisher{}
-
 		switch words[0] {
 		case "spawn":
 			err := gameState.CommandSpawn(words)
@@ -76,7 +74,7 @@ REPL:
 			if err != nil {
 				log.Println(err)
 			}
-			err = pub.SendMoveMessage(
+			err = ps.SendMoveMessage(
 				moveChannel,
 				username,
 				move)
