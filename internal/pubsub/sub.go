@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
+	"github.com/bntrtm/learn-pub-sub-starter/internal/routing"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
@@ -56,10 +57,13 @@ func SubscribeJSON[T any](
 			switch acktype {
 			case Ack:
 				err = msg.Ack(false)
+				log.Println("Ack")
 			case NackRequeue:
 				err = msg.Nack(false, true)
+				log.Println("NackRequeue")
 			case NackDiscard:
 				err = msg.Nack(false, false)
+				log.Println("NackDiscard")
 			default:
 				log.Println("invalid acktype")
 				continue
@@ -92,7 +96,9 @@ func DeclareAndBind(
 		queueType == Transient,
 		queueType == Transient,
 		false,
-		nil)
+		amqp.Table{
+			"x-dead-letter-exchange": routing.ExchangePerilDL,
+		})
 	if err != nil {
 		return nil, amqp.Queue{}, err
 	}
