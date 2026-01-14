@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/bntrtm/learn-pub-sub-starter/internal/gamelogic"
 	ps "github.com/bntrtm/learn-pub-sub-starter/internal/pubsub"
@@ -96,7 +97,21 @@ REPL:
 		case "status":
 			gameState.CommandStatus()
 		case "spam":
-			fmt.Println("Spamming not implemented yet!")
+			if len(words) == 1 {
+				fmt.Println("You can demonstrate pubsub backpressure by including a numeric value alongside the 'spam' command.")
+				continue
+			}
+			n, err := strconv.ParseInt(words[1], 0, 64)
+			if err != nil {
+				log.Println("Usage: spam <number>")
+			}
+			for i := 0; i < int(n); i++ {
+				malLog := gamelogic.GetMaliciousLog()
+				err := ps.SendGameLog(pubChannel, username, malLog)
+				if err != nil {
+					log.Println(err)
+				}
+			}
 		case "help":
 			gamelogic.PrintClientHelp()
 		case "quit":
