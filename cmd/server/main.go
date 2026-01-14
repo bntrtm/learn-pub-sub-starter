@@ -18,8 +18,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not open connection: %s", err.Error())
 	}
-	fmt.Println("Server start successful!")
 	defer cxn.Close()
+	fmt.Println("Server start successful!")
 
 	pauseChannel, err := cxn.Channel()
 	if err != nil {
